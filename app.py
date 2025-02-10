@@ -6,6 +6,7 @@ import os
 from deepface import DeepFace
 from flask_cors import CORS
 
+# Initialiser l'application Flask
 app = Flask(__name__)
 CORS(app)  # Active CORS pour autoriser les requêtes depuis ton site web
 
@@ -21,13 +22,20 @@ distance_metric = "cosine"
 threshold = 0.4
 
 def get_embedding(image_path):
+    """
+    Extrait l'embedding facial d'une image.
+    """
     try:
         embedding = DeepFace.represent(img_path=image_path, model_name="Facenet", enforce_detection=False)
         return np.array(embedding[0]["embedding"]).tolist()
-    except:
+    except Exception as e:
+        print(f"Erreur lors de l'extraction de l'empreinte faciale : {e}")
         return None
 
 def compute_distance(emb1, emb2, metric=distance_metric):
+    """
+    Calcule la distance entre deux embeddings selon la métrique choisie.
+    """
     emb1, emb2 = np.array(emb1), np.array(emb2)
     if metric == "cosine":
         cos_sim = np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
@@ -37,8 +45,15 @@ def compute_distance(emb1, emb2, metric=distance_metric):
     else:
         raise ValueError("Unknown metric. Use 'euclidean' or 'cosine'.")
 
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Bienvenue sur l'API de reconnaissance faciale !"})
+
 @app.route("/predict", methods=["POST"])
 def predict():
+    """
+    API pour prédire l'identité d'une personne à partir d'une image.
+    """
     try:
         if "file" not in request.files:
             return jsonify({"error": "Aucun fichier envoyé"}), 400
@@ -66,4 +81,5 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Utilise le port fourni par Render
+    app.run(host="0.0.0.0", port=port, debug=True)
