@@ -5,3 +5,6 @@ opencv-python
 numpy
 gunicorn
 waitress
+tensorflow==2.14.0
+keras==2.14.0
+tf-keras
