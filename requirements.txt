@@ -8,4 +8,4 @@ keras==2.14.0
 tf-keras
 gunicorn
 waitress
-
+pillow
