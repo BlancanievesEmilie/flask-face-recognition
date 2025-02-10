@@ -3,5 +3,7 @@ opencv-python==4.7.0.72
 numpy==1.23.5
 deepface==0.0.80
 gunicorn==20.1.0
-tensorflow==2.12.0
-keras==2.12.0
+tensorflow==2.14.0
+keras==2.14.0
+flask-cors
+waitress
