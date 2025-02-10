@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: face-recognition-api
+    runtime: docker
+    build:
+      dockerfile: Dockerfile
+    env: python
+    envVars:
+      - key: FLASK_ENV
+        value: production
+    port: 5000
