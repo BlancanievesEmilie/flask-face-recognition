@@ -1,10 +1,48 @@
+# Fichiers Python générés
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.db
-*.sqlite3
+
+# Environnements virtuels
 env/
 venv/
+.venv/
+.env/
+ENV/
+
+# Fichiers de configuration locaux
 *.env
+*.local
+
+# Fichiers de cache et temporaires
+.pytest_cache/
+.cache/
+*.swp
+*.swo
+*.log
+*.tmp
+
+# Fichiers de base de données
+*.db
+*.sqlite3
+
+# Fichiers de dépendances
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Fichiers spécifiques à l'IDE
+.vscode/
+.idea/
+
+# Fichiers spécifiques à macOS
 .DS_Store
+
+# Fichiers spécifiques à Windows
+Thumbs.db
+
+# Fichiers volumineux ou temporaires
+temp.jpg
+captured_image.jpg
