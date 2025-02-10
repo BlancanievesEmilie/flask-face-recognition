@@ -6,7 +6,7 @@ import os
 from deepface import DeepFace
 from flask_cors import CORS
 
-# Initialiser l'application Flask
+# Initialisation de l'application Flask
 app = Flask(__name__)
 CORS(app)  # Active CORS pour permettre les requêtes externes
 
@@ -29,7 +29,7 @@ def get_embedding(image_path):
         embedding = DeepFace.represent(img_path=image_path, model_name="Facenet", enforce_detection=False)
         return np.array(embedding[0]["embedding"]).tolist()
     except Exception as e:
-        print(f"Erreur lors de l'extraction de l'empreinte faciale : {e}")
+        print(f"❌ Erreur lors de l'extraction de l'empreinte faciale : {e}")
         return None
 
 def compute_distance(emb1, emb2, metric=distance_metric):
@@ -43,7 +43,7 @@ def compute_distance(emb1, emb2, metric=distance_metric):
     elif metric == "euclidean":
         return np.linalg.norm(emb1 - emb2)
     else:
-        raise ValueError("Unknown metric. Use 'euclidean' or 'cosine'.")
+        raise ValueError("❌ Unknown metric. Use 'euclidean' or 'cosine'.")
 
 @app.route("/", methods=["GET"])
 def home():
@@ -56,7 +56,7 @@ def predict():
     """
     try:
         if "file" not in request.files:
-            return jsonify({"error": "Aucun fichier envoyé"}), 400
+            return jsonify({"error": "❌ Aucun fichier envoyé"}), 400
 
         file = request.files["file"]
         image_path = "temp.jpg"
@@ -65,7 +65,7 @@ def predict():
         emb_unknown = get_embedding(image_path)
         if emb_unknown is None:
             os.remove(image_path)  # Nettoyage
-            return jsonify({"error": "Impossible d'extraire l'empreinte faciale"}), 400
+            return jsonify({"error": "❌ Impossible d'extraire l'empreinte faciale"}), 400
 
         best_agent = "Unknown"
         best_distance = float("inf")
@@ -83,6 +83,6 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 6000))  # Render attribue un port dynamique
+    port = int(os.environ.get("PORT", 5000))  # Render attribue un port dynamique
     print(f"✅ API démarrée sur le port {port}")
     app.run(host="0.0.0.0", port=port, debug=False)
