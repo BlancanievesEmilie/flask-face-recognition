@@ -5,30 +5,19 @@ import json
 import os
 from deepface import DeepFace
 from flask_cors import CORS
-import logging
 
 # Initialiser l'application Flask
 app = Flask(__name__)
 CORS(app)  # Active CORS pour permettre les requêtes externes
 
-# Configuration du logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 # Charger les embeddings sauvegardés
 EMBEDDINGS_FILE = "authorized_embeddings.json"
-mean_authorized_embeddings = {}
 if os.path.exists(EMBEDDINGS_FILE):
-    try:
-        with open(EMBEDDINGS_FILE, "r") as f:
-            mean_authorized_embeddings = json.load(f)
-        logger.info(f"✅ {len(mean_authorized_embeddings)} embeddings chargés depuis {EMBEDDINGS_FILE}")
-    except Exception as e:
-        logger.error(f"❌ Erreur lors du chargement des embeddings : {e}")
+    with open(EMBEDDINGS_FILE, "r") as f:
+        mean_authorized_embeddings = json.load(f)
 else:
-    logger.warning(f"⚠️ Fichier {EMBEDDINGS_FILE} introuvable. Aucun embedding chargé.")
+    mean_authorized_embeddings = {}
 
-# Paramètres de reconnaissance faciale
 distance_metric = "cosine"
 threshold = 0.4
 
@@ -40,7 +29,7 @@ def get_embedding(image_path):
         embedding = DeepFace.represent(img_path=image_path, model_name="Facenet", enforce_detection=False)
         return np.array(embedding[0]["embedding"]).tolist()
     except Exception as e:
-        logger.error(f"Erreur lors de l'extraction de l'empreinte faciale : {e}")
+        print(f"Erreur lors de l'extraction de l'empreinte faciale : {e}")
         return None
 
 def compute_distance(emb1, emb2, metric=distance_metric):
@@ -70,20 +59,14 @@ def predict():
             return jsonify({"error": "Aucun fichier envoyé"}), 400
 
         file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"error": "Aucun fichier sélectionné"}), 400
-
-        # Sauvegarder l'image temporairement
         image_path = "temp.jpg"
         file.save(image_path)
 
-        # Extraire l'embedding
         emb_unknown = get_embedding(image_path)
         if emb_unknown is None:
             os.remove(image_path)  # Nettoyage
             return jsonify({"error": "Impossible d'extraire l'empreinte faciale"}), 400
 
-        # Comparer avec les embeddings autorisés
         best_agent = "Unknown"
         best_distance = float("inf")
 
@@ -97,10 +80,9 @@ def predict():
         return jsonify({"name": best_agent, "distance": best_distance})
 
     except Exception as e:
-        logger.error(f"Erreur lors de la prédiction : {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Render attribue un port dynamique
-    logger.info(f"✅ API démarrée sur le port {port}")
+    port = int(os.environ.get("PORT", 6000))  # Render attribue un port dynamique
+    print(f"✅ API démarrée sur le port {port}")
     app.run(host="0.0.0.0", port=port, debug=False)
