@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 # Initialiser l'application Flask
 app = Flask(__name__)
-CORS(app)  # Active CORS pour autoriser les requêtes depuis ton site web
+CORS(app)  # Active CORS pour permettre les requêtes externes
 
 # Charger les embeddings sauvegardés
 EMBEDDINGS_FILE = "authorized_embeddings.json"
@@ -23,7 +23,7 @@ threshold = 0.4
 
 def get_embedding(image_path):
     """
-    Extrait l'embedding facial d'une image.
+    Extrait l'embedding facial d'une image avec DeepFace.
     """
     try:
         embedding = DeepFace.represent(img_path=image_path, model_name="Facenet", enforce_detection=False)
@@ -47,12 +47,12 @@ def compute_distance(emb1, emb2, metric=distance_metric):
 
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "Bienvenue sur l'API de reconnaissance faciale !"})
+    return jsonify({"message": "Bienvenue sur l'API de reconnaissance faciale ! API en ligne 🚀"})
 
 @app.route("/predict", methods=["POST"])
 def predict():
     """
-    API pour prédire l'identité d'une personne à partir d'une image.
+    API pour identifier une personne à partir d'une image.
     """
     try:
         if "file" not in request.files:
@@ -64,6 +64,7 @@ def predict():
 
         emb_unknown = get_embedding(image_path)
         if emb_unknown is None:
+            os.remove(image_path)  # Nettoyage
             return jsonify({"error": "Impossible d'extraire l'empreinte faciale"}), 400
 
         best_agent = "Unknown"
@@ -75,11 +76,13 @@ def predict():
                 best_distance = distance
                 best_agent = agent if distance < threshold else "Unknown"
 
+        os.remove(image_path)  # Nettoyage du fichier temporaire
         return jsonify({"name": best_agent, "distance": best_distance})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Utilise le port fourni par Render
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render attribue un port dynamique
+    print(f"✅ API démarrée sur le port {port}")
+    app.run(host="0.0.0.0", port=port, debug=False)
