@@ -40,6 +40,13 @@ def compute_distance(emb1, emb2, metric=distance_metric):
     else:
         raise ValueError("Métrique inconnue. Utilisez 'euclidean' ou 'cosine'.")
 
+@app.route("/")
+def home():
+    """
+    Route pour la racine de l'API.
+    """
+    return "Face Recognition API is running!"
+
 @app.route("/predict", methods=["POST"])
 def predict():
     """
@@ -78,4 +85,4 @@ def predict():
 
 if __name__ == "__main__":
     # Lancer l'application Flask
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
