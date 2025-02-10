@@ -6,9 +6,9 @@ import os
 from deepface import DeepFace
 from flask_cors import CORS
 
-# Initialisation de l'application Flask
+# Initialiser l'application Flask
 app = Flask(__name__)
-CORS(app)  # Active CORS pour permettre les requêtes externes
+CORS(app)  # Active CORS pour les requêtes externes
 
 # Charger les embeddings sauvegardés
 EMBEDDINGS_FILE = "authorized_embeddings.json"
@@ -17,6 +17,10 @@ if os.path.exists(EMBEDDINGS_FILE):
         mean_authorized_embeddings = json.load(f)
 else:
     mean_authorized_embeddings = {}
+
+# Vérification si les embeddings sont chargés correctement
+if not mean_authorized_embeddings:
+    print("⚠️ WARNING: Le fichier authorized_embeddings.json est vide ou non trouvé !")
 
 distance_metric = "cosine"
 threshold = 0.4
