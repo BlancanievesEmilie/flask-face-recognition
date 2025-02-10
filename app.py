@@ -4,41 +4,32 @@ import numpy as np
 import json
 import os
 from deepface import DeepFace
-from flask_cors import CORS
 
-# Initialiser l'application Flask
 app = Flask(__name__)
-CORS(app)  # Active CORS pour les requêtes externes
 
-# Charger les embeddings sauvegardés
+# Charger les embeddings pré-enregistrés
 EMBEDDINGS_FILE = "authorized_embeddings.json"
-if os.path.exists(EMBEDDINGS_FILE):
-    with open(EMBEDDINGS_FILE, "r") as f:
-        mean_authorized_embeddings = json.load(f)
-else:
-    mean_authorized_embeddings = {}
+with open(EMBEDDINGS_FILE, "r") as f:
+    mean_authorized_embeddings = json.load(f)
 
-# Vérification si les embeddings sont chargés correctement
-if not mean_authorized_embeddings:
-    print("⚠️ WARNING: Le fichier authorized_embeddings.json est vide ou non trouvé !")
-
+# Paramètres de la métrique de distance et du seuil
 distance_metric = "cosine"
 threshold = 0.4
 
 def get_embedding(image_path):
     """
-    Extrait l'embedding facial d'une image avec DeepFace.
+    Extrait l'embedding facial d'une image en utilisant DeepFace.
     """
     try:
         embedding = DeepFace.represent(img_path=image_path, model_name="Facenet", enforce_detection=False)
         return np.array(embedding[0]["embedding"]).tolist()
     except Exception as e:
-        print(f"❌ Erreur lors de l'extraction de l'empreinte faciale : {e}")
+        print(f"Erreur lors de l'extraction de l'embedding : {e}")
         return None
 
 def compute_distance(emb1, emb2, metric=distance_metric):
     """
-    Calcule la distance entre deux embeddings selon la métrique choisie.
+    Calcule la distance entre deux embeddings en utilisant la métrique spécifiée.
     """
     emb1, emb2 = np.array(emb1), np.array(emb2)
     if metric == "cosine":
@@ -47,30 +38,29 @@ def compute_distance(emb1, emb2, metric=distance_metric):
     elif metric == "euclidean":
         return np.linalg.norm(emb1 - emb2)
     else:
-        raise ValueError("❌ Unknown metric. Use 'euclidean' or 'cosine'.")
-
-@app.route("/", methods=["GET"])
-def home():
-    return jsonify({"message": "Bienvenue sur l'API de reconnaissance faciale ! API en ligne 🚀"})
+        raise ValueError("Métrique inconnue. Utilisez 'euclidean' ou 'cosine'.")
 
 @app.route("/predict", methods=["POST"])
 def predict():
     """
-    API pour identifier une personne à partir d'une image.
+    Endpoint pour la prédiction. Reçoit une image et retourne le nom de l'agent reconnu.
     """
     try:
+        # Vérifier si un fichier a été envoyé
         if "file" not in request.files:
-            return jsonify({"error": "❌ Aucun fichier envoyé"}), 400
+            return jsonify({"error": "Aucun fichier envoyé"}), 400
 
+        # Sauvegarder l'image temporairement
         file = request.files["file"]
         image_path = "temp.jpg"
         file.save(image_path)
 
+        # Extraire l'embedding de l'image inconnue
         emb_unknown = get_embedding(image_path)
         if emb_unknown is None:
-            os.remove(image_path)  # Nettoyage
-            return jsonify({"error": "❌ Impossible d'extraire l'empreinte faciale"}), 400
+            return jsonify({"error": "Impossible d'extraire l'empreinte faciale"}), 400
 
+        # Comparer avec les embeddings autorisés
         best_agent = "Unknown"
         best_distance = float("inf")
 
@@ -80,13 +70,12 @@ def predict():
                 best_distance = distance
                 best_agent = agent if distance < threshold else "Unknown"
 
-        os.remove(image_path)  # Nettoyage du fichier temporaire
+        # Retourner le résultat
         return jsonify({"name": best_agent, "distance": best_distance})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render attribue un port dynamique
-    print(f"✅ API démarrée sur le port {port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    # Lancer l'application Flask
+    app.run(host="0.0.0.0", port=5000, debug=True)
